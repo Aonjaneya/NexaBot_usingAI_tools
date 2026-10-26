@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetPulse IT Support — Python SA Triage Assistant</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.35) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(15, 118, 110, 0.25) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(30, 41, 59, 0.8) 0px, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-attachment: fixed;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-animate { animation: fadeIn 0.25s ease-out forwards; }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col selection:bg-teal-500 selection:text-white">
+
+    <!-- 1. SHOW-ONLY NAVIGATION BAR -->
+    <nav class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-900/75 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-blue-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
+                    <i class="ph-bold ph-broadcast text-white text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-base tracking-tight text-white">NetPulse</span>
+                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20">IT Helpdesk</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Enterprise Triage Portal</p>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
+                <span class="text-white border-b-2 border-teal-400 py-5 cursor-default flex items-center gap-1.5">
+                    <i class="ph ph-chats-circle text-teal-400"></i> Triage Bot
+                </span>
+                <span class="hover:text-white transition-colors cursor-default flex items-center gap-1.5 opacity-75">
+                    <i class="ph ph-book-open"></i> Knowledge Base
+                </span>
+                <button id="openStatsBtn" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="ph ph-chart-line-up"></i> Python SA Stats
+                </button>
+            </div>
+
+            <!-- Python Backend Connection Status -->
+            <div class="flex items-center gap-3">
+                <div id="backendStatusBadge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                    <span id="backendStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="backendStatusText">Connecting to Python...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. HEADER SECTION -->
+    <header class="max-w-4xl w-full mx-auto px-4 pt-6 pb-4 text-center sm:text-left flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-1.5 text-xs font-medium text-teal-400 mb-1">
+                <i class="ph-fill ph-lightning"></i> Powered by Python Simulated Annealing (`helpdesk_sa.py`)
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                Wi-Fi &amp; Network Automated Triage
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Minimizing expected resolution time &amp; user frustration while respecting diagnostic prerequisites.
+            </p>
+        </div>
+
+        <div class="flex flex-col items-center sm:items-end shrink-0">
+            <label class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Question Sequence Mode</label>
+            <div class="inline-flex rounded-xl bg-slate-900/90 p-1 border border-slate-800">
+                <button id="modeSaBtn" onclick="switchMode('SA')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-teal-500 text-slate-950 shadow">
+                    <i class="ph-bold ph-sparkle"></i> <span id="saBtnLabel">SA-Optimized (E=558)</span>
+                </button>
+                <button id="modeNaiveBtn" onclick="switchMode('NAIVE')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                    <i class="ph ph-list-numbers"></i> <span id="naiveBtnLabel">Naive Order (E=650)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. MAIN CHAT INTERFACE -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 pb-6 flex flex-col">
+        <div class="flex-1 bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 rounded-2xl shadow-2xl flex flex-col overflow-hidden min-h-[520px] max-h-[72vh]">
+            
+            <!-- Chat Top Bar / Live Telemetry -->
+            <div class="px-4 py-3 bg-slate-950/60 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                            <i class="ph-bold ph-robot text-lg"></i>
+                        </div>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 absolute -bottom-0.5 -right-0.5"></span>
+                    </div>
+                    <div>
+                        <h2 class="text-xs font-semibold text-white flex items-center gap-2">
+                            Triage Assistant
+                            <span id="activeModeBadge" class="text-[10px] px-2 py-0.5 rounded bg-teal-500/15 text-teal-300 border border-teal-500/30">
+                                SA Optimal Order
+                            </span>
+                        </h2>
+                        <p class="text-[11px] text-slate-400" id="stepProgressSubtext">Fetching sequence from Python backend...</p>
+                    </div>
+                </div>
+
+                <!-- Live Metrics Pills -->
+                <div class="flex items-center gap-2 text-xs">
+                    <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5">
+                        <i class="ph ph-footprint text-slate-400"></i>
+                        <span class="text-slate-400">Step:</span>
+                        <span id="metricStep" class="font-semibold text-white">0 / 8</span>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5">
+                        <i class="ph ph-clock text-teal-400"></i>
+                        <span class="text-slate-400">Time:</span>
+                        <span id="metricTime" class="font-semibold text-teal-300">0s</span>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5">
+                        <i class="ph ph-smiley-sad text-amber-400"></i>
+                        <span class="text-slate-400">Frustration:</span>
+                        <span id="metricFrustration" class="font-semibold text-amber-300">0</span>
+                    </div>
+                    <button onclick="fetchPythonBackend()" title="Re-run Python SA & Reset" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition">
+                        <i class="ph ph-arrows-counter-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Scroll Container -->
+            <div id="chatMessages" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4"></div>
+
+            <!-- Quick Action Chips -->
+            <div id="quickActionsBar" class="px-4 py-2.5 bg-slate-950/40 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
+
+            <!-- Chat Input Form -->
+            <form id="chatForm" class="p-3 sm:p-4 bg-slate-950/80 border-t border-slate-800 flex items-center gap-2.5">
+                <input 
+                    id="chatInput" 
+                    type="text" 
+                    placeholder="Describe your network issue or reply (e.g., 'Wi-Fi not working', 'Tried that, still broken', 'Fixed!')..." 
+                    autocomplete="off"
+                    class="flex-1 bg-slate-900 text-sm text-white placeholder-slate-500 px-4 py-3 rounded-xl border border-slate-800 focus:outline-none focus:border-teal-500/60 focus:ring-1 focus:ring-teal-500/40 transition"
+                />
+                <button 
+                    type="submit" 
+                    class="px-4 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-slate-950 font-semibold text-sm flex items-center gap-1.5 shadow-lg shadow-teal-500/10 transition shrink-0"
+                >
+                    <span>Send</span>
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- 4. MODAL: PYTHON SA MODEL STATS -->
+    <div id="statsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-chart-bar text-teal-400"></i>
+                        Python Backend Simulated Annealing Results
+                    </h3>
+                    <p id="modalTelemetrySub" class="text-xs text-slate-400">Cost Function: E(π) = ETR(π) + 10 · EF(π) + 5000 · Violations(π)</p>
+                </div>
+                <button id="closeStatsBtn" class="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div class="p-3.5 rounded-xl bg-slate-950/70 border border-emerald-500/30">
+                    <div id="modalSaHeader" class="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
+                        <i class="ph-bold ph-check-circle"></i> Python SA-Optimized Sequence
+                    </div>
+                    <ol id="modalSaList" class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside"></ol>
+                </div>
+                <div class="p-3.5 rounded-xl bg-slate-950/70 border border-amber-500/30">
+                    <div id="modalNaiveHeader" class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1.5">
+                        <i class="ph-bold ph-warning-circle"></i> Naive Runbook Sequence
+                    </div>
+                    <ol id="modalNaiveList" class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside"></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. FRONTEND SCRIPT INTEGRATED WITH FLASK API -->
+    <script>
+        // Rich conversational instructions mapped to the step names from helpdesk_sa.py
+        const STEP_INSTRUCTIONS = {
+            "Check Wi-Fi Switch": {
+                instruction: "First, let's verify that your physical Wi-Fi hardware switch (or Airplane Mode toggle in quick settings) isn't accidentally turned off.",
+                tip: "Look for a wireless LED indicator on your keyboard or check the bottom-right system tray."
+            },
+            "Forget & Reconnect Network": {
+                instruction: "Open your Wi-Fi settings, select your current corporate/home SSID, click 'Forget Network', and reconnect by re-entering your credentials.",
+                tip: "This clears cached 802.1X or WPA2/WPA3 session tokens."
+            },
+            "Restart Router/Modem": {
+                instruction: "Unplug your router and modem from power, wait 30 seconds, and plug them back in. Wait about 2 minutes for all status lights to turn solid.",
+                tip: "High success rate (20%), though it takes ~2.5 minutes to reboot."
+            },
+            "Check VPN Split-Tunnel": {
+                instruction: "Open your corporate VPN client and check if 'Split-Tunneling' or 'Block LAN traffic when disconnected' is misrouting your traffic. Try toggling VPN off briefly.",
+                tip: "Required before flushing DNS so VPN virtual adapters don't immediately overwrite resolver state."
+            },
+            "Flush DNS Cache": {
+                instruction: "Open your terminal or Command Prompt and run `ipconfig /flushdns` (Windows) or `sudo dscacheutil -flushcache` (macOS).",
+                tip: "Prerequisite satisfied: Checked after VPN Split-Tunnel inspection."
+            },
+            "Reinstall Network Driver": {
+                instruction: "Open Device Manager > Network Adapters, right-click your Wireless Adapter, select 'Uninstall device', and reboot your machine to auto-reinstall.",
+                tip: "Highest single-step fix rate (25%), saved for last due to high time (240s) and frustration (9/10)."
+            },
+            "Run Network Troubleshooter": {
+                instruction: "Launch the built-in OS Network Troubleshooter (Settings > System > Troubleshoot > Network & Internet) to automatically reset DHCP leases and default gateways.",
+                tip: "Automatically detects missing default gateway or self-assigned 169.254.x.x IP addresses."
+            },
+            "Check Proxy Settings": {
+                instruction: "Navigate to Network & Internet > Proxy and ensure no stale manual proxy server or broken PAC script is intercepting your HTTP/HTTPS requests.",
+                tip: "Ensure 'Automatically detect settings' is ON and 'Use a proxy server' is OFF unless required."
+            }
+        };
+
+        // Populated dynamically from the Python Flask backend
+        let STEPS = {};
+        let PREREQUISITES = [];
+        let W_FRUSTRATION = 10.0;
+        let SA_DATA = null;
+        let NAIVE_DATA = null;
+
+        let activeMode = 'SA';
+        let currentSequence = [];
+        let currentStepIndex = -1;
+        let isResolved = false;
+        let cumulativeTime = 0;
+        let cumulativeFrustration = 0;
+
+        const chatMessagesEl = document.getElementById('chatMessages');
+        const quickActionsBarEl = document.getElementById('quickActionsBar');
+        const chatFormEl = document.getElementById('chatForm');
+        const chatInputEl = document.getElementById('chatInput');
+
+        // -----------------------------------------------------------------
+        // FETCH OPTIMIZED SEQUENCE FROM PYTHON BACKEND (/api/get_sequence)
+        // -----------------------------------------------------------------
+        async function fetchPythonBackend() {
+            const badge = document.getElementById('backendStatusBadge');
+            const dot = document.getElementById('backendStatusDot');
+            const text = document.getElementById('backendStatusText');
+
+            try {
+                // Uses relative URL when served by Flask, or falls back to localhost:5000
+                const apiUrl = window.location.protocol === 'file:' 
+                    ? 'http://127.0.0.1:5000/api/get_sequence' 
+                    : '/api/get_sequence';
+
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                STEPS = data.steps;
+                PREREQUISITES = data.prerequisites;
+                W_FRUSTRATION = data.w_frustration;
+                SA_DATA = data.sa_optimized;
+                NAIVE_DATA = data.naive;
+
+                // Update top navbar badge
+                badge.className = "flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                text.textContent = `Python Connected (${SA_DATA.iterations} SA iters)`;
+
+                // Update buttons & modal lists
+                document.getElementById('saBtnLabel').textContent = `SA-Optimized (E=${SA_DATA.cost})`;
+                document.getElementById('naiveBtnLabel').textContent = `Naive Order (E=${NAIVE_DATA.cost})`;
+                document.getElementById('modalSaHeader').innerHTML = `<i class="ph-bold ph-check-circle"></i> Python SA-Optimized (E = ${SA_DATA.cost})`;
+                document.getElementById('modalNaiveHeader').innerHTML = `<i class="ph-bold ph-warning-circle"></i> Naive Runbook (E = ${NAIVE_DATA.cost})`;
+                document.getElementById('modalTelemetrySub').textContent = `Python SA ran ${SA_DATA.iterations} iterations and accepted ${SA_DATA.uphill_moves} uphill moves.`;
+
+                populateModalLists();
+                currentSequence = activeMode === 'SA' ? [...SA_DATA.sequence] : [...NAIVE_DATA.sequence];
+                resetChat(true);
+
+            } catch (error) {
+                console.error("Failed to connect to Python Flask server:", error);
+                badge.className = "flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300";
+                dot.className = "w-2 h-2 rounded-full bg-rose-400";
+                text.textContent = "Backend Offline (Run python app.py)";
+            }
+        }
+
+        function populateModalLists() {
+            const saListEl = document.getElementById('modalSaList');
+            const naiveListEl = document.getElementById('modalNaiveList');
+            saListEl.innerHTML = '';
+            naiveListEl.innerHTML = '';
+
+            SA_DATA.sequence.forEach(name => {
+                const s = STEPS[name];
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="text-white font-medium">${name}</span> <span class="text-slate-500">(${s.time_cost}s, P=${Math.round(s.success_prob*100)}%, F=${s.frustration_score})</span>`;
+                saListEl.appendChild(li);
+            });
+
+            NAIVE_DATA.sequence.forEach(name => {
+                const s = STEPS[name];
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="text-white font-medium">${name}</span> <span class="text-slate-500">(${s.time_cost}s, P=${Math.round(s.success_prob*100)}%, F=${s.frustration_score})</span>`;
+                naiveListEl.appendChild(li);
+            });
+        }
+
+        function getActiveModelStats() {
+            return activeMode === 'SA' ? SA_DATA : NAIVE_DATA;
+        }
+
+        function updateTelemetry() {
+            if (!SA_DATA) return;
+            const stepDisplay = currentStepIndex < 0 ? 0 : Math.min(currentStepIndex + 1, 8);
+            document.getElementById('metricStep').textContent = `${stepDisplay} / 8`;
+            document.getElementById('metricTime').textContent = `${cumulativeTime}s`;
+            document.getElementById('metricFrustration').textContent = `${cumulativeFrustration}`;
+
+            const stats = getActiveModelStats();
+            const subtextEl = document.getElementById('stepProgressSubtext');
+            if (isResolved) {
+                subtextEl.textContent = `Issue Resolved in ${cumulativeTime}s • Python E(π) = ${stats.cost}`;
+            } else if (currentStepIndex >= 0 && currentStepIndex < 8) {
+                subtextEl.textContent = `Active Step ${currentStepIndex + 1} of 8 • Python E(π) = ${stats.cost}`;
+            } else {
+                subtextEl.textContent = `Ready to diagnose • Python Expected Cost E(π) = ${stats.cost}`;
+            }
+        }
+
+        function appendBotMessage(htmlContent) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-start gap-3 msg-animate';
+            wrapper.innerHTML = `
+                <div class="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0 mt-0.5">
+                    <i class="ph-bold ph-robot text-base"></i>
+                </div>
+                <div class="max-w-[85%] sm:max-w-[78%] bg-slate-800/80 border border-slate-700/70 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-200 leading-relaxed shadow-sm">
+                    ${htmlContent}
+                </div>
+            `;
+            chatMessagesEl.appendChild(wrapper);
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+
+        function appendUserMessage(text) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-start justify-end gap-3 msg-animate';
+            const div = document.createElement('div');
+            div.textContent = text;
+            wrapper.innerHTML = `
+                <div class="max-w-[80%] sm:max-w-[70%] bg-gradient-to-br from-teal-500 to-blue-600 text-slate-950 font-medium rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm shadow-md">
+                    ${div.innerHTML}
+                </div>
+            `;
+            chatMessagesEl.appendChild(wrapper);
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+
+        function renderQuickActions() {
+            quickActionsBarEl.innerHTML = '';
+            if (!SA_DATA) return;
+
+            if (isResolved || currentStepIndex >= 8) {
+                addChip('🔄 Start New Triage Session', () => resetChat(), 'bg-teal-500/20 text-teal-300 border-teal-500/30');
+                addChip('📊 View Python SA Stats', () => toggleModal(true), 'bg-slate-800 text-slate-300 border-slate-700');
+                return;
+            }
+
+            if (currentStepIndex === -1) {
+                addChip('📶 My Wi-Fi is not connecting', () => handleUserTurn('My Wi-Fi is not connecting'));
+                addChip('🐢 Internet is dropping / super slow', () => handleUserTurn('My internet keeps dropping'));
+                addChip('🎲 Simulate Random Ticket', () => simulateAutoTicket(), 'bg-teal-500/15 text-teal-300 border-teal-500/30');
+            } else {
+                const prob = Math.round(STEPS[currentSequence[currentStepIndex]].success_prob * 100);
+                addChip('✅ That fixed it! Thanks', () => handleUserTurn('Yes, that fixed my connection!'), 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30');
+                addChip('❌ Still not working, next step', () => handleUserTurn('Tried that, still not working'), 'bg-rose-500/15 text-rose-300 border-rose-500/30');
+                addChip(`🎲 Roll Fix Probability (${prob}%)`, () => rollCurrentStepOutcome(), 'bg-blue-500/15 text-blue-300 border-blue-500/30');
+            }
+        }
+
+        function addChip(label, onClick, customClasses = 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700') {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `px-3 py-1.5 rounded-xl border text-xs font-medium transition shrink-0 flex items-center gap-1 ${customClasses}`;
+            btn.textContent = label;
+            btn.onclick = onClick;
+            quickActionsBarEl.appendChild(btn);
+        }
+
+        function presentNextStep() {
+            currentStepIndex++;
+            if (currentStepIndex >= currentSequence.length) {
+                updateTelemetry();
+                appendBotMessage(`
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-amber-400 font-semibold">
+                            <i class="ph-fill ph-warning-octagon text-lg"></i>
+                            <span>All 8 Automated Steps Exhausted — Escalating to Tier-2 Engineer</span>
+                        </div>
+                        <p class="text-slate-300 text-xs leading-relaxed">
+                            Completed all 8 diagnostic checks (${cumulativeTime}s total time, ${cumulativeFrustration} frustration points).
+                        </p>
+                    </div>
+                `);
+                renderQuickActions();
+                return;
+            }
+
+            const stepName = currentSequence[currentStepIndex];
+            const stepData = STEPS[stepName];
+            const copy = STEP_INSTRUCTIONS[stepName] || { instruction: `Perform step: ${stepName}`, tip: "" };
+
+            cumulativeTime += stepData.time_cost;
+            cumulativeFrustration += stepData.frustration_score;
+            updateTelemetry();
+
+            let prereqBadge = '';
+            for (const [first, later] of PREREQUISITES) {
+                if (stepName === later) {
+                    prereqBadge = `<span class="text-[10px] px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">Prerequisite met: after "${first}"</span>`;
+                }
+            }
+
+            appendBotMessage(`
+                <div class="space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 font-bold text-xs">
+                                Step ${currentStepIndex + 1} of 8
+                            </span>
+                            <span class="font-semibold text-white text-sm">${stepName}</span>
+                        </div>
+                        ${prereqBadge}
+                    </div>
+                    <p class="text-slate-200 text-sm">${copy.instruction}</p>
+                    <p class="text-xs text-slate-400 italic"><i class="ph ph-lightbulb text-amber-400"></i> ${copy.tip}</p>
+                    <div class="pt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                        <span class="px-2 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700">
+                            ⏱️ Est. Time: <strong class="text-white">${stepData.time_cost}s</strong>
+                        </span>
+                        <span class="px-2 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700">
+                            🎯 Fix Prob: <strong class="text-emerald-400">${Math.round(stepData.success_prob * 100)}%</strong>
+                        </span>
+                        <span class="px-2 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700">
+                            😤 Frustration: <strong class="text-amber-300">${stepData.frustration_score}/10</strong>
+                        </span>
+                    </div>
+                    <p class="text-xs text-teal-300 pt-1 font-medium">Did this resolve your network issue?</p>
+                </div>
+            `);
+            renderQuickActions();
+        }
+
+        function handleUserTurn(rawText) {
+            const text = rawText.trim();
+            if (!text || !SA_DATA) return;
+            appendUserMessage(text);
+
+            const lower = text.toLowerCase();
+
+            if (currentStepIndex === -1) {
+                setTimeout(() => {
+                    appendBotMessage(`Running diagnostic sequence fetched from your Python backend (<strong>${activeMode === 'SA' ? 'Simulated Annealing Optimized' : 'Naive Runbook'}</strong> mode).`);
+                    setTimeout(() => presentNextStep(), 300);
+                }, 200);
+                return;
+            }
+
+            if (isResolved || currentStepIndex >= 8) {
+                setTimeout(() => resetChat(), 250);
+                return;
+            }
+
+            const resolvedWords = ['yes', 'worked', 'fixed', 'solved', 'good now', 'connected', 'resolved', 'thanks', 'thank you'];
+            const negativeWords = ['no', 'not', 'still', 'broken', 'didn\'t', 'didnt', 'nope', 'fail', 'next'];
+            const isPositive = resolvedWords.some(w => lower.includes(w)) && !negativeWords.some(w => lower.includes(w));
+
+            if (isPositive) {
+                isResolved = true;
+                updateTelemetry();
+                const stepName = currentSequence[currentStepIndex];
+                const singleSessionCost = cumulativeTime + W_FRUSTRATION * cumulativeFrustration;
+                setTimeout(() => {
+                    appendBotMessage(`
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 text-emerald-400 font-bold text-base">
+                                <i class="ph-fill ph-check-circle text-xl"></i>
+                                <span>Connection Restored at Step ${currentStepIndex + 1} (${stepName})!</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
+                                <div class="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                                    <div class="text-slate-400 text-[10px]">Time Spent</div>
+                                    <div class="font-bold text-teal-300">${cumulativeTime}s</div>
+                                </div>
+                                <div class="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                                    <div class="text-slate-400 text-[10px]">Frustration</div>
+                                    <div class="font-bold text-amber-300">${cumulativeFrustration} pts</div>
+                                </div>
+                                <div class="p-2 rounded-lg bg-slate-950/70 border border-slate-800">
+                                    <div class="text-slate-400 text-[10px]">Session Cost</div>
+                                    <div class="font-bold text-white">${singleSessionCost}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    renderQuickActions();
+                }, 250);
+            } else {
+                setTimeout(() => presentNextStep(), 250);
+            }
+        }
+
+        function rollCurrentStepOutcome() {
+            if (currentStepIndex < 0 || currentStepIndex >= 8 || isResolved) return;
+            const stepName = currentSequence[currentStepIndex];
+            const prob = STEPS[stepName].success_prob;
+            const roll = Math.random();
+            if (roll < prob) {
+                handleUserTurn(`🎲 [Roll: ${(roll * 100).toFixed(1)}% < ${(prob * 100).toFixed(0)}%] Yes, that fixed it!`);
+            } else {
+                handleUserTurn(`🎲 [Roll: ${(roll * 100).toFixed(1)}% ≥ ${(prob * 100).toFixed(0)}%] Still not working, next step.`);
+            }
+        }
+
+        function simulateAutoTicket() {
+            resetChat(false);
+            appendUserMessage("🎲 Simulate a full user troubleshooting session using Python step probabilities.");
+            function runNextSimStep() {
+                presentNextStep();
+                const stepName = currentSequence[currentStepIndex];
+                const prob = STEPS[stepName].success_prob;
+                const solved = Math.random() < prob;
+                setTimeout(() => {
+                    if (solved) {
+                        handleUserTurn(`Yes! "${stepName}" resolved the issue (p=${Math.round(prob*100)}%).`);
+                    } else if (currentStepIndex < 7) {
+                        appendUserMessage(`Tried "${stepName}", didn't fix it. Next step please.`);
+                        setTimeout(runNextSimStep, 350);
+                    } else {
+                        handleUserTurn(`Still not working after all 8 steps.`);
+                    }
+                }, 400);
+            }
+            setTimeout(runNextSimStep, 300);
+        }
+
+        function switchMode(mode) {
+            if (!SA_DATA) return;
+            activeMode = mode;
+            currentSequence = mode === 'SA' ? [...SA_DATA.sequence] : [...NAIVE_DATA.sequence];
+
+            const saBtn = document.getElementById('modeSaBtn');
+            const naiveBtn = document.getElementById('modeNaiveBtn');
+            const badge = document.getElementById('activeModeBadge');
+
+            if (mode === 'SA') {
+                saBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-teal-500 text-slate-950 shadow';
+                naiveBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                badge.textContent = `SA Optimal Order (E=${SA_DATA.cost})`;
+                badge.className = 'text-[10px] px-2 py-0.5 rounded bg-teal-500/15 text-teal-300 border border-teal-500/30';
+            } else {
+                naiveBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow';
+                saBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+                badge.textContent = `Naive Runbook Order (E=${NAIVE_DATA.cost})`;
+                badge.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30';
+            }
+            resetChat(true);
+        }
+
+        function resetChat(showGreeting = true) {
+            currentStepIndex = -1;
+            isResolved = false;
+            cumulativeTime = 0;
+            cumulativeFrustration = 0;
+            chatMessagesEl.innerHTML = '';
+            updateTelemetry();
+
+            if (showGreeting && SA_DATA) {
+                const stats = getActiveModelStats();
+                appendBotMessage(`
+                    <div class="space-y-2">
+                        <p class="font-medium text-white">
+                            👋 Hello! I'm connected to your <strong>Python Simulated Annealing Backend</strong>.
+                        </p>
+                        <p class="text-xs text-slate-300">
+                            Active Mode: <strong>${activeMode === 'SA' ? 'Python SA-Optimized' : 'Naive Runbook'}</strong> 
+                            (Expected Time: <span class="text-teal-300 font-semibold">${stats.etr}s</span>, 
+                            Expected Frustration: <span class="text-amber-300 font-semibold">${stats.ef}</span>, 
+                            Total Cost E = <span class="text-white font-semibold">${stats.cost}</span>).
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            Describe your Wi-Fi or network issue below, or click a quick button to begin!
+                        </p>
+                    </div>
+                `);
+            }
+            renderQuickActions();
+        }
+
+        chatFormEl.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = chatInputEl.value;
+            if (!val.trim()) return;
+            chatInputEl.value = '';
+            handleUserTurn(val);
+        });
+
+        const statsModalEl = document.getElementById('statsModal');
+        function toggleModal(show) {
+            statsModalEl.classList.toggle('hidden', !show);
+            statsModalEl.classList.toggle('flex', show);
+        }
+        document.getElementById('openStatsBtn').addEventListener('click', () => toggleModal(true));
+        document.getElementById('closeStatsBtn').addEventListener('click', () => toggleModal(false));
+        statsModalEl.addEventListener('click', (e) => { if (e.target === statsModalEl) toggleModal(false); });
+
+        // Fetch data from Flask when page loads
+        window.addEventListener('DOMContentLoaded', fetchPythonBackend);
+    </script>
+</body>
+</html>
